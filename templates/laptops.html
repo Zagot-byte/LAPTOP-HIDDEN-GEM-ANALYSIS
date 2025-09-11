@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laptop Hidden Gem Analysis</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="{{ url_for('index') }}">Gaming Analysis</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}">Home</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="{{ url_for('laptops') }}">Laptops</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <header class="bg-primary text-white py-4">
+        <div class="container">
+            <h1 class="h2 mb-2">Laptop Hidden Gem Analysis</h1>
+            <p class="mb-0 opacity-75">Search and check laptops by Hidden Gem Ratio for your category</p>
+        </div>
+    </header>
+
+    <!-- Search Section -->
+    <main class="container my-4">
+        <div class="search-section p-4 mb-4">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-8">
+                    <input type="text" class="form-control form-control-lg" id="laptopSearch"
+                           placeholder="Search by model, brand, or specs" value="{{ search_query or '' }}">
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-primary btn-lg w-100" id="searchBtn">
+                        <span class="search-text">Search Laptops</span>
+                        <span class="spinner-border spinner-border-sm d-none ms-2" role="status"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="row g-3">
+            {% if laptops %}
+                {% for laptop in laptops %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="card p-3 action-card">
+                        <h5 class="fw-semibold">{{ laptop['model'] }}</h5>
+
+                        <p><strong>Suitability:</strong></p>
+                        <ul class="list-unstyled">
+                            <li>
+                                <strong>Gaming:</strong>
+                                {% if laptop['hidden_gem_ratio'] > 0.0020 %}
+                                    <span class="badge bg-success">Excellent</span>
+                                {% elif laptop['hidden_gem_ratio'] >= 0.0012 %}
+                                    <span class="badge bg-secondary">Good</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Bad</span>
+                                {% endif %}
+                            </li>
+                            <li>
+                                <strong>Editing:</strong>
+                                {% if laptop['hidden_gem_ratio'] > 0.0015 %}
+                                    <span class="badge bg-success">Excellent</span>
+                                {% elif laptop['hidden_gem_ratio'] >= 0.0008 %}
+                                    <span class="badge bg-secondary">Good</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Bad</span>
+                                {% endif %}
+                            </li>
+                            <li>
+                                <strong>General (Coding):</strong>
+                                {% if laptop['hidden_gem_ratio'] > 0.0010 %}
+                                    <span class="badge bg-success">Excellent</span>
+                                {% elif laptop['hidden_gem_ratio'] >= 0.0005 %}
+                                    <span class="badge bg-secondary">Good</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Bad</span>
+                                {% endif %}
+                            </li>
+                        </ul>
+
+                        <p><strong>Price:</strong> ₹{{ "{:,.0f}".format(laptop['price']) }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-12 text-center py-5">
+                    <p class="text-muted">No laptops found. Use the search box above to find your ideal laptop.</p>
+                </div>
+            {% endif %}
+        </div>
+    </main>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Search JS -->
+    <script>
+        const searchBtn = document.getElementById('searchBtn');
+        const searchInput = document.getElementById('laptopSearch');
+
+        searchBtn.addEventListener('click', function() {
+            const query = searchInput.value.trim();
+            if(query) {
+                searchBtn.disabled = true;
+                searchBtn.querySelector('.search-text').textContent = 'Searching...';
+                searchBtn.querySelector('.spinner-border').classList.remove('d-none');
+                window.location.href = `{{ url_for('laptops') }}?search=${encodeURIComponent(query)}`;
+            }
+        });
+
+        searchInput.addEventListener('keypress', function(e){
+            if(e.key === 'Enter') searchBtn.click();
+        });
+    </script>
+</body>
+</html>

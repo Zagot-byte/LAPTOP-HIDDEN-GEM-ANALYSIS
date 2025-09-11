@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPU Analysis - Graphics Card Price & Performance Comparison</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="{{ url_for('index') }}">Gaming Analysis</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('index') }}">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('laptops') }}">Laptops</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('gpus') }}">GPUs</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <header class="bg-primary text-white py-4">
+        <div class="container">
+            <h1 class="h2 mb-2">GPU Analysis</h1>
+            <p class="mb-0 opacity-75">Compare graphics cards by price, performance, and efficiency</p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container my-4">
+        <!-- Search Section -->
+        <div class="search-section">
+            <div class="row align-items-end">
+                <div class="col-md-8">
+                    <label for="gpuSearch" class="form-label fw-semibold">Search Graphics Cards</label>
+                    <input type="text" class="form-control form-control-lg" id="gpuSearch" 
+                           placeholder="Enter GPU model (e.g., RTX 4070, RX 7800 XT, GTX 1660)" 
+                           value="{{ search_query or '' }}">
+                </div>
+                <div class="col-md-4 mt-3 mt-md-0">
+                    <button type="button" class="btn btn-primary btn-lg w-100" id="searchBtn">
+                        <span class="search-text">Search GPUs</span>
+                        <span class="spinner-border spinner-border-sm d-none ms-2" role="status"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultsSection" class="{% if not gpus %}d-none{% endif %}">
+            <!-- Results Table -->
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="h5 mb-0">
+                        <i class="bi bi-gpu-card me-2"></i>
+                        Search Results 
+                        {% if gpus %}
+                            <span class="badge bg-light text-primary ms-2">{{ gpus|length }} GPUs found</span>
+                        {% endif %}
+                    </h3>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="gpuTable">
+                            <thead>
+                                <tr>
+                                    <th>Model</th>
+                                    <th>Price</th>
+                                    <th>VRAM</th>
+                                    <th>TDP</th>
+                                    <th>Hidden Gem Ratio</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if gpus %}
+                                    {% for gpu in gpus %}
+                                    <tr>
+                                        <td class="fw-semibold">{{ gpu.model }}</td>
+                                        <td>
+                                            <span class="price-badge">${{ "{:,.0f}".format(gpu.price) }}</span>
+                                        </td>
+                                        <td>{{ gpu.vram }}GB</td>
+                                        <td>{{ gpu.tdp }}W</td>
+                                        <td>
+                                            {% if gpu.hidden_gem_ratio >= 8.0 %}
+                                                <span class="hidden-gem">{{ "%.1f"|format(gpu.hidden_gem_ratio) }}</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ "%.1f"|format(gpu.hidden_gem_ratio) }}</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted py-4">
+                                            <i class="bi bi-search fs-1 d-block mb-2"></i>
+                                            Use the search box above to find graphics cards
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Price vs Performance Scatterplot -->
+            <div class="chart-container">
+                <h3 class="h5 mb-4">
+                    <i class="bi bi-graph-up me-2 text-secondary"></i>
+                    Price vs Performance Analysis
+                </h3>
+                <div class="row">
+                    <div class="col-12">
+                        <canvas id="pricePerformanceChart" width="400" height="300"></canvas>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Each point represents a GPU. Position shows price (X-axis) vs performance score (Y-axis). 
+                        Points closer to the top-left offer better value.
+                    </small>
+                </div>
+            </div>
+
+            <!-- Performance Insights -->
+            <div class="row mt-4">
+                <div class="col-md-4">
+                    <div class="card bg-light">
+                        <div class="card-body text-center">
+                            <i class="bi bi-trophy text-warning fs-1 mb-2"></i>
+                            <h5 class="card-title">Best Performance</h5>
+                            <p class="card-text">
+                                {% if best_performance_gpu %}
+                                    <strong>{{ best_performance_gpu.model }}</strong><br>
+                                    <small class="text-muted">Performance Leader</small>
+                                {% else %}
+                                    <small class="text-muted">Search to see results</small>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-light">
+                        <div class="card-body text-center">
+                            <i class="bi bi-gem text-accent fs-1 mb-2"></i>
+                            <h5 class="card-title">Best Value</h5>
+                            <p class="card-text">
+                                {% if best_value_gpu %}
+                                    <strong>{{ best_value_gpu.model }}</strong><br>
+                                    <small class="text-muted">Hidden Gem Ratio: {{ "%.1f"|format(best_value_gpu.hidden_gem_ratio) }}</small>
+                                {% else %}
+                                    <small class="text-muted">Search to see results</small>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-light">
+                        <div class="card-body text-center">
+                            <i class="bi bi-lightning text-primary fs-1 mb-2"></i>
+                            <h5 class="card-title">Most Efficient</h5>
+                            <p class="card-text">
+                                {% if most_efficient_gpu %}
+                                    <strong>{{ most_efficient_gpu.model }}</strong><br>
+                                    <small class="text-muted">{{ most_efficient_gpu.tdp }}W TDP</small>
+                                {% else %}
+                                    <small class="text-muted">Search to see results</small>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- No Results Message -->
+        <div id="noResultsSection" class="{% if gpus %}d-none{% endif %}">
+            <div class="text-center py-5">
+                <div class="mb-4">
+                    <i class="bi bi-gpu-card text-muted" style="font-size: 4rem;"></i>
+                </div>
+                <h3 class="h4 text-muted mb-3">Ready to Find Your Perfect Graphics Card?</h3>
+                <p class="text-muted mb-4">Use the search box above to discover GPUs and compare their specifications, prices, and performance metrics.</p>
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h5 class="card-title">Search Tips:</h5>
+                                <ul class="list-unstyled mb-0">
+                                    <li><i class="bi bi-check-circle text-success me-2"></i>Try NVIDIA models: "RTX 4090", "RTX 4070", "GTX 1660"</li>
+                                    <li><i class="bi bi-check-circle text-success me-2"></i>Search AMD cards: "RX 7900 XTX", "RX 6700 XT"</li>
+                                    <li><i class="bi bi-check-circle text-success me-2"></i>Use series names: "RTX 40", "RX 7000"</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        // Search functionality
+        document.getElementById('searchBtn').addEventListener('click', function() {
+            const searchQuery = document.getElementById('gpuSearch').value.trim();
+            if (searchQuery) {
+                // Show loading state
+                const btn = this;
+                const searchText = btn.querySelector('.search-text');
+                const spinner = btn.querySelector('.spinner-border');
+                
+                btn.disabled = true;
+                searchText.textContent = 'Searching...';
+                spinner.classList.remove('d-none');
+                
+                // Redirect to search results (Flask will handle this)
+                window.location.href = `{{ url_for('gpus') }}?search=${encodeURIComponent(searchQuery)}`;
+            }
+        });
+
+        // Enter key search
+        document.getElementById('gpuSearch').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('searchBtn').click();
+            }
+        });
+
+        // Initialize Price vs Performance Scatterplot
+        {% if gpus %}
+        const scatterData = {{ scatter_data | tojson }};
+        
+        const ctx = document.getElementById('pricePerformanceChart').getContext('2d');
+        const pricePerformanceChart = new Chart(ctx, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'GPUs',
+                    data: scatterData.points,
+                    backgroundColor: function(context) {
+                        const ratio = context.parsed.y / context.parsed.x * 1000; // Performance per dollar * 1000
+                        if (ratio > 8) return '#10b981'; // High value - green
+                        if (ratio > 6) return '#6366f1'; // Good value - blue
+                        if (ratio > 4) return '#f59e0b'; // Average value - orange
+                        return '#ef4444'; // Poor value - red
+                    },
+                    borderColor: function(context) {
+                        const ratio = context.parsed.y / context.parsed.x * 1000;
+                        if (ratio > 8) return '#059669';
+                        if (ratio > 6) return '#4f46e5';
+                        if (ratio > 4) return '#d97706';
+                        return '#dc2626';
+                    },
+                    borderWidth: 2,
+                    pointRadius: 8,
+                    pointHoverRadius: 10
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            title: function(context) {
+                                return scatterData.labels[context[0].dataIndex];
+                            },
+                            label: function(context) {
+                                return [
+                                    `Price: $${context.parsed.x.toLocaleString()}`,
+                                    `Performance: ${context.parsed.y.toFixed(0)}`,
+                                    `Value Ratio: ${(context.parsed.y / context.parsed.x * 1000).toFixed(1)}`
+                                ];
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        type: 'linear',
+                        position: 'bottom',
+                        title: {
+                            display: true,
+                            text: 'Price (USD)'
+                        },
+                        grid: {
+                            color: '#e5e7eb'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toLocaleString();
+                            }
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Performance Score'
+                        },
+                        grid: {
+                            color: '#e5e7eb'
+                        }
+                    }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'point'
+                }
+            }
+        });
+
+        // Resize chart container
+        document.getElementById('pricePerformanceChart').style.height = '400px';
+        {% endif %}
+    </script>
+</body>
+</html>
