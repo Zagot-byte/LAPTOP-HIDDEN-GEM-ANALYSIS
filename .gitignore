@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Virtual environments
+.venv/
+venv/
+
+# Local data files
+data/*.csv
+*.ipynb_checkpoints
+
+# OS
+.DS_Store
+Thumbs.db
+
