@@ -63,9 +63,9 @@
                         <ul class="list-unstyled">
                             <li>
                                 <strong>Gaming:</strong>
-                                {% if laptop['hidden_gem_ratio'] > 0.0020 %}
+                                {% if laptop['hidden_gem_ratio'] > 0.23 %}
                                     <span class="badge bg-success">Excellent</span>
-                                {% elif laptop['hidden_gem_ratio'] >= 0.0012 %}
+                                {% elif laptop['hidden_gem_ratio'] >= 0.10 %}
                                     <span class="badge bg-secondary">Good</span>
                                 {% else %}
                                     <span class="badge bg-danger">Bad</span>
@@ -73,9 +73,9 @@
                             </li>
                             <li>
                                 <strong>Editing:</strong>
-                                {% if laptop['hidden_gem_ratio'] > 0.0015 %}
+                                {% if laptop['hidden_gem_ratio'] > 0.15 %}
                                     <span class="badge bg-success">Excellent</span>
-                                {% elif laptop['hidden_gem_ratio'] >= 0.0008 %}
+                                {% elif laptop['hidden_gem_ratio'] >= 0.08 %}
                                     <span class="badge bg-secondary">Good</span>
                                 {% else %}
                                     <span class="badge bg-danger">Bad</span>
@@ -83,9 +83,9 @@
                             </li>
                             <li>
                                 <strong>General (Coding):</strong>
-                                {% if laptop['hidden_gem_ratio'] > 0.0010 %}
+                                {% if laptop['hidden_gem_ratio'] > 0.12 %}
                                     <span class="badge bg-success">Excellent</span>
-                                {% elif laptop['hidden_gem_ratio'] >= 0.0005 %}
+                                {% elif laptop['hidden_gem_ratio'] >= 0.07 %}
                                     <span class="badge bg-secondary">Good</span>
                                 {% else %}
                                     <span class="badge bg-danger">Bad</span>
