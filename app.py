@@ -17,9 +17,7 @@ class Laptop:
 @app.route("/")
 def index():
     return render_template("index.html")
-@app.route('/gpus')
-def gpus():
-    return "<h2 style='text-align:center; margin-top:50px;'>GPU Page Coming Soon 🚧</h2>"
+
 
 @app.route("/laptops")
 @app.route("/laptops")
@@ -38,7 +36,7 @@ def laptops():
             "ssd": row["SSD"],
             "display": row["Display"],
             "graphics": row["Graphics"],
-            "os": row["OS"],
+        
             "cpu_score": row["CPU_Score"],
             "ram_score": row["RAM_Score"],
             "gpu_score": row["GPU_Score"],
